@@ -46,7 +46,7 @@
         <ion-checkbox slot="start" [(ngModel)]="t.completada" (ionChange)="actualizarEstado(t)"></ion-checkbox>
         <ion-label>
           <h2 [style.text-decoration]="t.completada ? 'line-through' : 'none'"
-              [style.color]="t.completada ? 'gray' : 'black'">
+              [style.color]="t.completada ? 'gray' : 'white'">
             {{ t.titulo }}
           </h2>
           <ion-note color="medium">{{ nombreCategoria(t.categoriaId) }}</ion-note>
