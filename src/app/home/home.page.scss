@@ -25,3 +25,36 @@
 #container a {
   text-decoration: none;
 }
+
+// Estilo para el modal de categorías
+.center-modal {
+  --height: 60%;
+  --width: 95%;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+// Tarjeta de entrada de tareas
+ion-card {
+  margin: 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+// Títulos de tareas
+h2 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+// Contenedor de filtros
+.ion-padding {
+  padding-top: 0;
+  padding-bottom: 8px;
+}
+
+// Ajuste para la lista
+ion-list {
+  background: transparent;
+}

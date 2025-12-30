@@ -4,7 +4,8 @@ import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 const routes: Routes = [
   {
     path: 'home',
-    loadChildren: () => import('./home/home.module').then( m => m.HomePageModule)
+    // Cambiamos loadChildren por loadComponent para componentes Standalone
+    loadComponent: () => import('./home/home.page').then( m => m.HomePage)
   },
   {
     path: '',
