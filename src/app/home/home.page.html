@@ -1,81 +1,147 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-title>Mis Tareas</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="setOpen(true)">
-        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-      <ion-button (click)="nuevaCategoria()">
-        <ion-icon slot="icon-only" name="add-circle-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-menu contentId="main-content">
+  <ion-header class="ion-no-border">
+    <ion-toolbar>
+      <ion-title>Listado de Categorias</ion-title>
+    </ion-toolbar>
+  </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-card>
-    <ion-card-content>
-      <ion-item lines="full">
-        <ion-input [(ngModel)]="nuevaTarea" placeholder="¿Qué hay que hacer?"></ion-input>
-      </ion-item>
-      <ion-item lines="full">
-        <ion-label>Categoría</ion-label>
-        <ion-select [(ngModel)]="categoriaSeleccionada" interface="popover">
-          <ion-select-option [value]="0">Sin categoría</ion-select-option>
-          <ion-select-option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <ion-button expand="block" (click)="agregar()" class="ion-margin-top">AGREGAR</ion-button>
-    </ion-card-content>
-  </ion-card>
+  <ion-content class="ion-padding">
+    <ion-list lines="none">
+      <ion-menu-toggle>
+        <ion-item button (click)="filtroCategoriaId = -1; aplicarFiltro()" [class.active-item]="filtroCategoriaId === -1">
+          <ion-icon name="list-outline" slot="start"></ion-icon>
+          <ion-label>Todas</ion-label>
+        </ion-item>
+        
+        <ion-item button *ngFor="let cat of categorias" 
+                  (click)="filtroCategoriaId = cat.id; aplicarFiltro()"
+                  [class.active-item]="filtroCategoriaId === cat.id">
+          <ion-icon name="folder-outline" slot="start"></ion-icon>
+          <ion-label>{{ cat.nombre }}</ion-label>
+        </ion-item>
+      </ion-menu-toggle>
+    </ion-list>
 
-  <div class="ion-padding">
-    <ion-item lines="none" style="--background: #f4f4f4; border-radius: 8px; color: black;">
-      <ion-label>Filtrar por:</ion-label>
-      <ion-select [(ngModel)]="filtroSeleccionado" (ionChange)="aplicarFiltro()" interface="popover">
-        <ion-select-option [value]="-1">Ver Todas</ion-select-option>
-        <ion-select-option [value]="0">Sin Categoría</ion-select-option>
-        <ion-select-option *ngFor="let cat of categorias" [value]="cat.id">{{ cat.nombre }}</ion-select-option>
-      </ion-select>
-    </ion-item>
+    <ion-button expand="block" fill="clear" (click)="abrirModalNuevaCategoria()" class="btn-add-category">
+      <ion-icon name="add-outline" slot="start"></ion-icon>
+      Nueva Categoría
+    </ion-button>
+    <ion-button expand="block" fill="clear" (click)="setModalCategorias(true)" color="medium">
+      <ion-icon name="settings-outline" slot="start"></ion-icon>
+      Gestionar Categorías
+    </ion-button>
+  </ion-content>
+</ion-menu>
+
+<ion-content [fullscreen]="true" id="main-content" class="task-manager-content">
+  
+  <div class="header-section ion-padding">
+    <div class="top-row">
+      <ion-menu-button></ion-menu-button>
+      <div style="width: 48px;"></div> <h1 class="main-title">Mis Tareas</h1>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-labels">
+        <span>{{ tareasCompletadas }} de {{ totalTareas }} completadas</span>
+        <span>{{ porcentajeProgreso }}%</span>
+      </div>
+      <ion-progress-bar [value]="progreso" class="custom-progress"></ion-progress-bar>
+    </div>
+
+    <div class="search-bar-container ion-margin-top">
+      <ion-searchbar [(ngModel)]="textoBusqueda" (ionInput)="aplicarFiltro()" placeholder="Encuentra tu tarea..."></ion-searchbar>
+    </div>
   </div>
 
-  <ion-list>
-    <ion-item-sliding *ngFor="let t of tareasFiltradas">
-      <ion-item>
-        <ion-checkbox slot="start" [(ngModel)]="t.completada" (ionChange)="actualizarEstado(t)"></ion-checkbox>
-        <ion-label>
-          <h2 [style.text-decoration]="t.completada ? 'line-through' : 'none'"
-              [style.color]="t.completada ? 'gray' : 'white'">
-            {{ t.titulo }}
-          </h2>
-          <ion-note color="medium">{{ nombreCategoria(t.categoriaId) }}</ion-note>
-        </ion-label>
-      </ion-item>
+  <div class="filter-tabs ion-padding-horizontal">
+    <ion-segment [(ngModel)]="filtroTiempo" (ionChange)="aplicarFiltro()" mode="md" scrollable="true">
+      <ion-segment-button value="todas"><ion-label>Todas</ion-label></ion-segment-button>
+      <ion-segment-button value="hoy"><ion-label>Hoy</ion-label></ion-segment-button>
+      <ion-segment-button value="semana"><ion-label>Esta Semana</ion-label></ion-segment-button>
+      <ion-segment-button value="completadas"><ion-label>Completadas</ion-label></ion-segment-button>
+      <ion-segment-button value="prioridad"><ion-label>Prioridad</ion-label></ion-segment-button>
+      <ion-segment-button value="atrasadas"><ion-label>Atrasadas</ion-label></ion-segment-button>
+    </ion-segment>
+  </div>
 
-      <ion-item-options side="end">
-        <ion-item-option color="danger" (click)="eliminar(t.id)" *ngIf="todoService.showDeleteButton">
-          <ion-icon slot="icon-only" name="trash"></ion-icon>
-        </ion-item-option>
-      </ion-item-options>
-    </ion-item-sliding>
+  <br/>
+
+  <ion-list lines="none" class="task-list">
+    <div *ngFor="let t of tareasFiltradas" class="task-card-wrapper">
+      <ion-item-sliding>
+        <ion-item class="task-card" [class.completed]="t.completada">
+          <div class="priority-indicator" 
+               [ngClass]="{'high': t.prioridad === 'alta', 'medium': t.prioridad === 'media', 'low': t.prioridad === 'baja'}"></div> 
+          
+          <ion-checkbox slot="start" [(ngModel)]="t.completada" (ionChange)="actualizarEstado(t)"></ion-checkbox>
+          <ion-label>
+            <h2 [class.strikethrough]="t.completada">{{ t.titulo }}</h2>
+            <p>
+              <ion-icon name="folder-outline" style="vertical-align: middle;"></ion-icon> 
+                  {{ getNombreCategoria(t.categoriaId) }}
+            </p>
+            <p><ion-icon name="calendar-outline" style="vertical-align: middle;"></ion-icon>
+              {{ t.fecha | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+          </ion-label>
+          <div slot="end" class="task-actions">
+            <ion-button fill="clear" (click)="abrirModalTarea(t)">
+              <ion-icon name="pencil-outline" color="primary"></ion-icon>
+            </ion-button>
+            <!-- <ion-icon name="chevron-forward-outline" class="chevron-icon"></ion-icon> -->
+          </div>
+        </ion-item>
+
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="eliminar(t.id)" *ngIf="tareaService.mostrarBotonEliminar()">
+            <ion-icon slot="icon-only" name="trash"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </div>
   </ion-list>
 </ion-content>
 
-<ion-modal [isOpen]="isModalOpen" (didDismiss)="setOpen(false)" class="center-modal">
+<ion-modal [isOpen]="isCategoryCreateModalOpen" (didDismiss)="cerrarModalCategoria()" class="center-modal">
   <ng-template>
-    <ion-header>
-      <ion-toolbar color="light">
-        <ion-title>Categorías</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="setOpen(false)">
-            <ion-icon name="close-outline"></ion-icon>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>{{ categoriaActual?.id ? 'Editar Categoría' : 'Nueva Categoría' }}</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="edit-form">
+        <ion-item lines="none" class="custom-input-item">
+          <ion-label position="stacked">Nombre de la categoría</ion-label>
+          <ion-input [(ngModel)]="categoriaActual.nombre" placeholder="Ej. Trabajo, Compras..."></ion-input>
+        </ion-item>
+        
+        <div class="ion-padding-top">
+          <ion-button expand="block" (click)="guardarCategoria()" class="btn-save">
+            {{ categoriaActual?.id ? 'Guardar Cambios' : 'Crear Categoría' }}
           </ion-button>
+          <ion-button expand="block" fill="clear" color="medium" (click)="cerrarModalCategoria()">
+            Cancelar
+          </ion-button>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-modal [isOpen]="isModalCategoriasOpen" (didDismiss)="setModalCategorias(false)" class="center-modal">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>Editar Categorías</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="setModalCategorias(false)">Cerrar</ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <ion-list>
+      <ion-list lines="full">
         <ion-item *ngFor="let cat of categorias">
           <ion-label>{{ cat.nombre }}</ion-label>
           <ion-button slot="end" fill="clear" (click)="editarCat(cat)">
@@ -89,3 +155,81 @@
     </ion-content>
   </ng-template>
 </ion-modal>
+
+<ion-modal [isOpen]="isTaskModalOpen" (didDismiss)="cerrarModalTarea()" [initialBreakpoint]="0.85" [breakpoints]="[0, 0.85, 1]" class="edit-task-modal">
+  <ng-template>
+    <ion-header class="ion-no-border">
+      <ion-toolbar>
+        <ion-title>{{ tareaActual?.id ? 'Editar Tarea' : 'Nueva Tarea' }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="cerrarModalTarea()">Cancelar</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content class="ion-padding" *ngIf="tareaActual">
+      <div class="edit-form">
+        <ion-item lines="none" class="custom-input-item">
+          <ion-label position="stacked">Título de la tarea</ion-label>
+          <ion-input [(ngModel)]="tareaActual.titulo" placeholder="Ej. Comprar leche"></ion-input>
+        </ion-item>
+
+        <ion-item lines="none" class="custom-input-item ion-margin-top">
+          <ion-label position="stacked">Categoría</ion-label>
+          <ion-select [(ngModel)]="tareaActual.categoriaId" interface="popover">
+            <ion-select-option [value]="0">Sin categoría</ion-select-option>
+            <ion-select-option *ngFor="let cat of categorias" [value]="cat.id">
+              {{ cat.nombre }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item lines="none" class="custom-input-item ion-margin-top">
+          <ion-label position="stacked">Fecha y Hora de entrega</ion-label>
+          <div class="datetime-container ion-margin-top">
+            <ion-datetime-button datetime="datetime"></ion-datetime-button>
+            
+            <ion-modal [keepContentsMounted]="true">
+              <ng-template>
+                <ion-datetime 
+                  id="datetime" 
+                  presentation="date-time" 
+                  [(ngModel)]="fechaISO"
+                  [preferWheel]="true"
+                  size="cover">
+                </ion-datetime>
+              </ng-template>
+            </ion-modal>
+          </div>
+        </ion-item>
+
+        <ion-item lines="none" class="custom-input-item ion-margin-top">
+          <ion-label position="stacked">Prioridad</ion-label>
+          <ion-segment [(ngModel)]="tareaActual.prioridad" mode="ios" class="priority-segment">
+            <ion-segment-button value="alta">
+              <ion-label color="danger">Alta</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="media">
+              <ion-label color="warning">Media</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="baja">
+              <ion-label color="success">Baja</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </ion-item>
+
+        <div class="ion-padding-top">
+          <ion-button expand="block" (click)="guardarTarea()" class="btn-save">
+            {{ tareaActual?.id ? 'Guardar Cambios' : 'Crear Tarea' }}
+          </ion-button>
+        </div>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
+<ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab-button (click)="abrirModalTarea()">
+    <ion-icon name="add"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
